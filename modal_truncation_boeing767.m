@@ -1,4 +1,4 @@
-% MODAL_TRUNCATION_BOEING767  Demo 4b: stable/unstable split, Boeing 767 SISO.
+% MODAL_TRUNCATION_BOEING767  Demo 2: stable/unstable split, Boeing 767 SISO.
 %
 %   The Boeing 767 aeroelastic model (n=55) has a mix of stable and unstable
 %   poles -- a handful of right-half-plane modes drive the unstable behaviour
@@ -8,7 +8,7 @@
 %   handles for H_D (the in-contour unstable subsystem) and the residual
 %   H_{D^c} = H - H_D.
 %
-%   Produces two figures referenced by Demo 4b of the YMMOR deck:
+%   Produces two figures referenced by Demo 2 of the YMMOR deck:
 %       tex/figures/mt_boeing_poles.pdf -- contour + true vs. computed poles
 %       tex/figures/mt_boeing_bode.pdf  -- |H|, |H_D|, |H_{D^c}| vs. omega
 %
@@ -27,13 +27,12 @@
 %             code/modal_truncation.m (synthetic counterpart, Demo 4a)
 
 %% Paths
-here = fileparts(mfilename('fullpath'));
-if exist('Numerics.ModalTruncation','class') ~= 8
-    addpath(genpath(fullfile(here,'..','..','..','..','CIMTOOL','src')));
-end
-% Data ships in code/data/ so this folder is self-contained for a future repo.
+% Figures land in code/figures/ next to this script. CIMTOOL is assumed to
+% already be on the MATLAB path -- see code/README.md for setup.
+here     = fileparts(mfilename('fullpath'));
+if isempty(here); here = pwd; end
 data_dir = fullfile(here,'data');
-fig_dir  = fullfile(here,'..','tex','figures');
+fig_dir  = fullfile(here,'figures');
 if ~exist(fig_dir,'dir'); mkdir(fig_dir); end
 fsp = 16;  % figure font size
 
@@ -68,11 +67,7 @@ ew_stab   = ewref(real(ewref) <= 0);
 fprintf('Boeing 767 SISO: n = %d, #unstable = %d, #stable = %d\n', ...
         n, numel(ew_ust), numel(ew_stab));
 
-% SISO transfer function as a callable. Defining H from (A,b,c) directly avoids
-% the rank-deficient diagonalising similarity used in pole-residue form (the
-% diagonaliser V has cond(V) ~ 1e20 for this model).
-I_n = eye(n);
-H   = @(z) c * ((z*I_n - A) \ b);
+I_n = eye(n); H   = @(z) c * ((z*I_n - A) \ b);
 
 %% Circular-segment contour over {Re z > 0}, enclosing the unstable poles
 % A circle of radius rho centered at gamma=0 covering the right half-plane
@@ -126,7 +121,7 @@ scatter(real(ew_stab), imag(ew_stab), 60, 'b', 'filled', ...
 scatter(real(ew_ust),  imag(ew_ust),  120, 'r', 'filled', ...
         'DisplayName', 'unstable ($D$)');
 scatter(real(ew), imag(ew), 180, 'k', 'x', 'LineWidth', 2.5, ...
-        'DisplayName', 'computed (Hankel)');
+        'DisplayName', 'computed');
 hold off; grid on;
 axis equal;
 % Pad ~ one contour radius beyond the disk on each side; the chord at Re=0

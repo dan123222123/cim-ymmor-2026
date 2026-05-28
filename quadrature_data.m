@@ -10,11 +10,11 @@ H = @(z) C*((z*eye(size(A)) - A) \ B);
 VTmaroon = [134  31  65]/255;
 VTorange = [232 119  34]/255;
 %
-% Figure-save directory: ../tex/figures/ relative to this script. Resolve
-% once so cells run later still know where to write.
+% Figures land in code/figures/ next to this script. CIMTOOL is assumed to
+% already be on the MATLAB path -- see code/README.md for setup.
 thisfile = mfilename('fullpath');
 if isempty(thisfile); thisfile = fullfile(pwd,'quadrature_data.m'); end
-figDir = fullfile(fileparts(thisfile),'..','tex','figures');
+figDir = fullfile(fileparts(thisfile),'figures');
 if ~exist(figDir,'dir'); mkdir(figDir); end
 
 %% Quadrature Data, MIMO Case
@@ -57,7 +57,7 @@ s.ell = 1; s.r = 1;
 
 %% Set Data Matrix Size & heatmap grid (shared across all N)
 K = n;
-Ngrid = 1001; xg = linspace(-10,5,Ngrid); yg = linspace(-7.5,7.5,Ngrid);
+Ngrid = 10; xg = linspace(-10,5,Ngrid); yg = linspace(-7.5,7.5,Ngrid);
 [Xg,Yg] = meshgrid(xg,yg); G = Xg + 1i*Yg;
 
 %% Sweep over a few quadrature-node counts.
@@ -203,18 +203,37 @@ cb.Label.Interpreter = 'latex';
 cb.Label.String = '$\log_{10}(\|\mathrm{SPLoewner}\| / \|\mathrm{ERA}\|)$';
 exportgraphics(gcf, fullfile(figDir,'quad_heatmaps.png'), 'Resolution', 500);
 
-%% Singular-value decay -- exported for pgfplots.
-% The "Quadrature Error Changes the Picture" frame in tex/main.tex renders
-% these curves in LaTeX so the math fonts match the rest of the deck. Two
-% files written:
-%   tex/figures/quad_svd.dat       -- one row per k, columns
-%                                     k era<N1> spl<N1> ... era<Nk> spl<Nk>
-%                                     where <Ni> are the entries of N_values
-%   tex/figures/quad_svd_meta.tex  -- defines \QuadSvdSplLabelN<N> via
-%                                     \csname so the legend tracks sigma_best
-% The MATLAB plotting code below is intentionally left commented so a user can
-% uncomment it and preview the curves locally.
-%
+%% Singular-value decay -- MATLAB preview (default).
+figure(2+nN); clf;
+markers = {'-o','-s','-^'};
+kk = (1:size(Sigma_era_all,1)).';
+hold on;
+for idx = 1:nN
+    Nq = N_values(idx); sb = sigma_best_all(idx);
+    plot(kk,Sigma_era_all(:,idx),markers{idx},'LineWidth',1.5, ...
+         'MarkerFaceColor',VTmaroon,'Color',VTmaroon, ...
+         'DisplayName',sprintf('ERA ($N=%d$)',Nq));
+    plot(kk,Sigma_spl_all(:,idx),markers{idx},'LineWidth',1.5, ...
+         'MarkerFaceColor',VTorange,'Color',VTorange, ...
+         'DisplayName',sprintf('SPLoewner ($N=%d$, $\\sigma=%.2f%+0.2f\\,i$)', ...
+                               Nq,real(sb),imag(sb)));
+end
+hold off;
+yscale("log"); xlim([kk(1),kk(end)]); xticks(kk); grid on;
+xlabel('$k$','Interpreter','latex');
+ylabel('$\sigma_k/\sigma_1$','Interpreter','latex');
+legend('Interpreter','latex','Location','northoutside','Orientation','horizontal','FontSize',8,'NumColumns',3);
+exportgraphics(gcf, fullfile(figDir,'quad_svd.png'), 'Resolution', 500);
+
+%% Pgfplots-friendly data export (commented out; uncomment to regenerate the
+%% .dat / _meta.tex pair the deck loads when rendering the curves in LaTeX so
+%% the math fonts match the rest of the slides).
+%   quad_svd.dat       -- one row per k, columns
+%                         k era<N1> spl<N1> ... era<Nk> spl<Nk>
+%                         where <Ni> are the entries of N_values
+%   quad_svd_meta.tex  -- defines \QuadSvdSplLabelN<N> via \csname so the
+%                         legend tracks sigma_best
+%{
 % Build a single multi-column table; pgfplots' "table[x=k, y=era<N>]" picks
 % columns by header name.
 varNames = cell(1, 1 + 2*nN);
@@ -234,7 +253,6 @@ end
 T = table(data{:}, 'VariableNames', varNames);
 writetable(T, fullfile(figDir,'quad_svd.dat'), ...
            'Delimiter','space', 'FileType','text');
-%
 % Write the legend-label macros. Macro names contain digits, so we go through
 % \csname; consumer side: \csname QuadSvdSplLabelN16\endcsname.
 fid = fopen(fullfile(figDir,'quad_svd_meta.tex'),'w');
@@ -246,30 +264,6 @@ for idx = 1:nN
             Nq, Nq, real(sb), imag(sb));
 end
 fclose(fid);
-
-%% Local MATLAB preview of the SVD decay (commented out; the slide uses pgfplots
-%% via the .dat/.tex files written above. Uncomment this block to preview in MATLAB).
-%{
-figure(2+nN); clf;
-markers = {'-o','-s','-^'};
-kk = (1:size(Sigma_era_all,1)).';
-hold on;
-for idx = 1:nN
-    Nq = N_values(idx); sb = sigma_best_all(idx);
-    plot(kk,Sigma_era_all(:,idx),markers{idx},'LineWidth',1.5, ...
-         'MarkerFaceColor',VTmaroon,'Color',VTmaroon, ...
-         'DisplayName',sprintf('ERA ($N=%d$)',Nq));
-    plot(kk,Sigma_spl_all(:,idx),markers{idx},'LineWidth',1.5, ...
-         'MarkerFaceColor',VTorange,'Color',VTorange, ...
-         'DisplayName',sprintf('SPLoewner ($N=%d$, $\\sigma=%.2f%+0.2f\\,i$)', ...
-                               Nq,real(sb),imag(sb)));
-end
-hold off;
-yscale("log"); xlim([kk(1),kk(end)]); xticks(kk); grid on;
-xlabel('$k$','Interpreter','latex');
-ylabel('$\sigma_k/\sigma_1$','Interpreter','latex');
-legend('Interpreter','latex','Location','northoutside','Orientation','vertical','FontSize',8);
-exportgraphics(gcf, fullfile(figDir,'quad_svd.png'), 'Resolution', 500);
 %}
 %
 for idx = 1:nN

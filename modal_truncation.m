@@ -1,4 +1,4 @@
-% MODAL_TRUNCATION  Demo 4a: synthetic stable/unstable spectral split via CIMTOOL.
+% MODAL_TRUNCATION  Demo 1: synthetic stable/unstable spectral split via CIMTOOL.
 %
 %   A SISO transfer function with 2 right-half-plane (unstable) poles and 4
 %   left-half-plane (stable) poles is sampled along a circular-segment contour
@@ -6,7 +6,7 @@
 %   in-region subsystem H_D (the unstable part) directly from those samples; the
 %   residual H_{D^c} = H - H_D then recovers the stable complement.
 %
-%   Produces the two figures referenced by Demo 4a of the YMMOR deck:
+%   Produces the two figures referenced by Demo 1 of the YMMOR deck:
 %       tex/figures/mt_synth_poles.pdf  -- contour + true vs. computed poles
 %       tex/figures/mt_synth_bode.pdf   -- |H|, |H_D|, |H_{D^c}| vs. omega
 %
@@ -17,11 +17,11 @@
 %   See also: Numerics.ModalTruncation, Numerics.Contour.CircularSegment, gmatch
 
 %% Paths
+% Figures land in code/figures/ next to this script. CIMTOOL is assumed to
+% already be on the MATLAB path -- see code/README.md for setup.
 here = fileparts(mfilename('fullpath'));
-if exist('Numerics.ModalTruncation','class') ~= 8
-    addpath(genpath(fullfile(here,'..','..','..','..','CIMTOOL','src')));
-end
-fig_dir = fullfile(here,'..','tex','figures');
+if isempty(here); here = pwd; end
+fig_dir = fullfile(here,'figures');
 if ~exist(fig_dir,'dir'); mkdir(fig_dir); end
 fsp = 16; % figure font size
 
@@ -102,7 +102,7 @@ plot(real(gamma + rho*[exp(1i*phi), exp(-1i*phi)]), ...
 scatter(real(ew_stab), imag(ew_stab), 90, 'b', 'filled', 'DisplayName', 'stable ($D^c$)');
 scatter(real(ew_ust),  imag(ew_ust),  90, 'r', 'filled', 'DisplayName', 'unstable ($D$)');
 scatter(real(ew), imag(ew), 150, 'k', 'x', 'LineWidth', 2, ...
-        'DisplayName', sprintf('computed (%s)', mode_names{ref}));
+        'DisplayName', sprintf('computed', mode_names{ref}));
 yl = ylim; plot([0 0], yl, 'k:', 'LineWidth', 0.5, 'HandleVisibility', 'off'); ylim(yl);
 hold off; axis equal; grid on;
 xlabel('$\Re z$', 'Interpreter', 'latex'); ylabel('$\Im z$', 'Interpreter', 'latex');

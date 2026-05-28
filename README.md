@@ -10,18 +10,37 @@ by contour integration, with realization via Hankel / ERA, SPLoewner (single-poi
 and MPLoewner (multi-point Loewner). The scripts here are the drivers that
 generate every figure in the deck and double as live demos during the talk.
 
+## Assumptions
+
+The drivers make two assumptions, and do nothing to discover or work
+around either:
+
+1. **CIMTOOL is already on the MATLAB path.** The scripts call
+   `Numerics.ModalTruncation`, `Numerics.sploewner.*`, `Numerics.realize`,
+   `Visual.Contour.Ellipse`, `Visual.OperatorData`, `Visual.SampleData`,
+   `Visual.CIM`, and `Visual.CIMTOOL` directly. Put CIMTOOL on the path
+   before running any driver, e.g. via your MATLAB `startup.m`:
+
+   ```matlab
+   addpath(genpath('/path/to/CIMTOOL/src'));
+   ```
+
+   or interactively / per-session:
+
+   ```matlab
+   addpath(genpath('/path/to/CIMTOOL/src'));
+   ```
+
+2. **Figures are written to `code/figures/`** (a sibling of the driver
+   scripts). The folder is created on first run, is `.gitignore`'d, and
+   is computed from `mfilename('fullpath')` so it does not depend on the
+   current working directory. If you want figures elsewhere, edit
+   `figDir = fullfile(...,'figures')` in the script's first cell.
+
 ## Quickstart
 
 ```matlab
-% 1. Clone this repo and CIMTOOL side-by-side:
-%      ~/cim-ymmor-2026/    (this repo)
-%      ~/CIMTOOL/           (https://github.com/dan123222123/CIMTOOL)
-%
-% 2. From MATLAB, open this folder and run any of the demo scripts
-%    cell-by-cell (Ctrl+Enter), or end-to-end. Each script auto-adds
-%    CIMTOOL to the MATLAB path on the first run if it is not already
-%    available.
-
+% In MATLAB, with CIMTOOL on the path and this folder as cwd:
 modal_truncation              % synthetic 2-RHP-pole / 4-LHP-pole split
 modal_truncation_boeing767    % Boeing 767 SISO, real stable-unstable split
 qep                           % Tisseur & Meerbergen QEP, CIMTOOL launcher
@@ -29,9 +48,12 @@ exact_data                    % exact-Markov-parameter \sigma sweep
 quadrature_data               % same sweep with quadrature samples
 ```
 
-If CIMTOOL is somewhere other than `../../../../CIMTOOL` relative to this
-folder, edit the `addpath(genpath(...))` line in the script's `%% Paths`
-cell (or pre-`addpath` CIMTOOL yourself before running).
+End-to-end from a shell:
+
+```bash
+matlab -batch "addpath(genpath('/path/to/CIMTOOL/src')); \
+               addpath('/path/to/code'); modal_truncation"
+```
 
 ## Dependencies
 
@@ -51,6 +73,7 @@ code/
 ├── .gitignore
 ├── data/
 │   └── boeing767_nnLTI.mat              # Boeing 767 aeroelastic model (n=55)
+├── figures/                             # driver outputs land here (created on first run, .gitignore'd)
 ├── modal_truncation.m                   # Demo 4a: synthetic stable/unstable split
 ├── modal_truncation_boeing767.m         # Demo 4b: Boeing 767 SISO, ELEV-QCG channel
 ├── qep.m                                # NEP example: gyroscopic QEP (Tisseur & Meerbergen 2001 §3.6)
@@ -62,11 +85,6 @@ code/
 ├── redblue_license.txt
 └── html/                                # `matlab publish` output (not under version control by default)
 ```
-
-Each driver writes its figures to `../tex/figures/` relative to its own
-location (so the parent presentation directory picks them up). When this
-folder is moved to its own repo, swap that path to a local `figures/` (one
-line per script -- look for `fig_dir = fullfile(...)`.).
 
 ## Reproducing the slide figures
 
@@ -86,7 +104,8 @@ matlab -nodisplay -batch 'run_mode = "figs"; modal_truncation_boeing767;'
 ```
 
 Output PDFs (e.g. `mt_synth_poles.pdf`, `mt_boeing_bode.pdf`) land in
-`../tex/figures/`.
+`code/figures/`. Copy them over to `../tex/figures/` (or symlink) when
+rebuilding the presentation.
 
 ## License
 

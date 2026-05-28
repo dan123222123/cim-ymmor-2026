@@ -15,5 +15,5 @@ html/
 .vscode/
 .idea/
 
-# Local user paths and overrides -- if you add a local_paths.m, keep it private
-local_paths.m
+# Driver figure output -- regenerated on demand by the demo scripts.
+figures/
