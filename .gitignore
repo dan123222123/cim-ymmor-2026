@@ -1,0 +1,19 @@
+# MATLAB auto-save files
+*.asv
+*.m~
+
+# MATLAB MEX binaries (none used here, but a habit)
+*.mex*
+
+# `matlab publish` HTML output -- regenerated on demand
+html/
+
+# Editor / OS clutter
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# Local user paths and overrides -- if you add a local_paths.m, keep it private
+local_paths.m

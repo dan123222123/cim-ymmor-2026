@@ -1,0 +1,131 @@
+%% Setup
+n = 6; refew = -n:-1;
+A = diag(refew); B = (1:n)'; C = 1:n;
+%
+% Virginia Tech palette (matches tex/main.tex preamble: RGB(134,31,65) and
+% RGB(232,119,34)). MATLAB's scatter() rejects hex strings as positional
+% color, so keep these as RGB triplets.
+VTmaroon = [134  31  65]/255;
+VTorange = [232 119  34]/255;
+%
+% Figure-save directory: ../tex/figures/ relative to this script. Resolve
+% once so cells run later still know where to write.
+thisfile = mfilename('fullpath');
+if isempty(thisfile); thisfile = fullfile(pwd,'exact_data.m'); end
+figDir = fullfile(fileparts(thisfile),'..','tex','figures');
+if ~exist(figDir,'dir'); mkdir(figDir); end
+%
+figure(1); clf;
+scatter(real(refew),imag(refew), 120, VTorange, 'd', 'filled', ...
+        'MarkerEdgeColor','k','LineWidth',1.0, 'DisplayName','eigenvalues of $\mathbf{A}$');
+grid on; axis equal;
+xlabel('$\mathrm{Re}\,z$','Interpreter','latex');
+ylabel('$\mathrm{Im}\,z$','Interpreter','latex');
+title('Exact eigenvalues of $\mathbf{A}$','Interpreter','latex');
+legend('Interpreter','latex','Location','northwest');
+
+%% Set Data Matrix Sizes
+K = n; % half of the number of moments to use in data matrix construction
+
+%% ERA
+sigma = Inf; % interpolation point
+% construct first 2*K unprobed Markov Parameters
+M = Numerics.sploewner.build_exact_moments(sigma,A,B,C,2*K);
+% build base and shifted data matrices
+[Db,Ds] = Numerics.sploewner.build_sploewner(sigma,M,M,M,K);
+% check eigenvalues of (regular) pencil (Ds,Db) vs eigenvalues of A
+ew = realize_inorder(Db,Ds); ERA_err = norm(ew-diag(A));
+
+%% SPLoewner -- example of finite shift/generalized moments
+sigma = 1+1i;
+M = Numerics.sploewner.build_exact_moments(sigma,A,B,C,2*K);
+[Db,Ds] = Numerics.sploewner.build_sploewner(sigma,M,M,M,K);
+norm(eig(Ds,Db)-diag(A));
+
+%% realize system on a grid of shifts &
+N = 1001; x = linspace(-7.5,0,N); y = linspace(-5,5,N); [X,Y] = meshgrid(x,y); G = X + 1i*Y;
+SPLoewner_err = zeros(N,N);
+parfor i=1:N
+    for j=1:N
+        sigma = G(i,j);
+        M = Numerics.sploewner.build_exact_moments(sigma,A,B,C,2*K);
+        [Db,Ds] = Numerics.sploewner.build_sploewner(sigma,M,M,M,K);
+        ew = realize_inorder(Db,Ds); SPLoewner_err(i,j) = norm(ew-diag(A));
+    end
+end
+
+%% Plot heatmap of log10(SPLoewner err / ERA err), with refew + best-sigma overlay.
+% Switched from heatmap() to imagesc() so we can hold on and scatter markers.
+ls_eravspl = log10(SPLoewner_err./ERA_err);
+[bsn,bsidx] = min(ls_eravspl,[],"all"); sigma_best = G(bsidx);
+%
+figure(2); clf;
+imagesc(x,y,ls_eravspl); axis xy; axis equal;
+xlim([x(1) x(end)]); ylim([y(1) y(end)]);
+colormap(redblue(5000)); clim([-1 1]);
+cb = colorbar; cb.Label.Interpreter = 'latex';
+cb.Label.String = '$\log_{10}(\|\mathrm{SPLoewner}\| / \|\mathrm{ERA}\|)$';
+xlabel('$\mathrm{Re}\,\sigma$','Interpreter','latex');
+ylabel('$\mathrm{Im}\,\sigma$','Interpreter','latex');
+title(sprintf('ERA err $= %.2e$;\\quad best SPLoewner err $= %.2e$', ...
+              ERA_err, SPLoewner_err(bsidx)), 'Interpreter','latex');
+hold on;
+scatter(real(refew),imag(refew), 90, VTorange, 'd', 'filled', ...
+        'MarkerEdgeColor','k','LineWidth',1.0, 'DisplayName','eigenvalues of $\mathbf{A}$');
+scatter(real(sigma_best),imag(sigma_best), 110, 'k', 's', 'filled', ...
+        'MarkerEdgeColor','w','LineWidth',1.0, 'DisplayName','best $\sigma$');
+hold off;
+% legend('Interpreter','latex','Location','northeast','Color','w');
+set(gca,'Layer','top'); % keep axes on top of the image
+exportgraphics(gcf, fullfile(figDir,'exact_heatmap.png'), 'Resolution', 500);
+
+%% singular value decay of ERA and SPLoewner Db -- exported for pgfplots.
+% The slide ("Where Should sigma Live?" frame in tex/main.tex) renders these
+% in LaTeX so the math fonts match the rest of the deck. Two files written:
+%   tex/figures/exact_svd.dat       -- columns k, era, spl (space-separated)
+%   tex/figures/exact_svd_meta.tex  -- defines \ExactSvdSplLabel with sigma_best
+% The MATLAB plotting code below is intentionally left commented so a user can
+% uncomment it and preview the curves locally.
+%
+% ERA (sigma = Inf)
+M = Numerics.sploewner.build_exact_moments(Inf,A,B,C,2*K);
+[Db,~] = Numerics.sploewner.build_sploewner(Inf,M,M,M,K);
+Sigma_era = svd(Db); Sigma_era = Sigma_era / Sigma_era(1);
+% SPLoewner at best sigma
+M = Numerics.sploewner.build_exact_moments(sigma_best,A,B,C,2*K);
+[Db,~] = Numerics.sploewner.build_sploewner(sigma_best,M,M,M,K);
+Sigma_spl = svd(Db); Sigma_spl = Sigma_spl / Sigma_spl(1);
+%
+% Write the data table. pgfplots' "table[x=k,y=era]" reads the header row.
+T = table((1:n).', Sigma_era, Sigma_spl, 'VariableNames', {'k','era','spl'});
+writetable(T, fullfile(figDir,'exact_svd.dat'), ...
+           'Delimiter','space', 'FileType','text');
+%
+% Write the legend-label macro for the SPLoewner curve so it tracks sigma_best.
+fid = fopen(fullfile(figDir,'exact_svd_meta.tex'),'w');
+fprintf(fid, '%% Auto-generated by code/exact_data.m -- do not edit by hand.\n');
+fprintf(fid, ['\\providecommand{\\ExactSvdSplLabel}' ...
+              '{SPLoewner ($\\sigma=%.2f%+0.2fi$)}\n'], ...
+        real(sigma_best), imag(sigma_best));
+fclose(fid);
+
+%% Local MATLAB preview of the SVD decay (commented out; the slide uses pgfplots
+%% via the .dat/.tex files written above. Uncomment this block to preview in MATLAB).
+%{
+figure(3); clf;
+plot(1:n,Sigma_era,'-o','LineWidth',1.5,'MarkerFaceColor',VTmaroon, ...
+     'Color',VTmaroon,'DisplayName','ERA ($\sigma=\infty$)');
+hold on;
+plot(1:n,Sigma_spl,'-s','LineWidth',1.5,'MarkerFaceColor',VTorange, ...
+     'Color',VTorange, ...
+     'DisplayName',sprintf('SPLoewner ($\\sigma=%.2f%+0.2f\\,i$)', ...
+                           real(sigma_best),imag(sigma_best)));
+hold off;
+yscale("log"); xlim([1,n]); xticks(1:n); grid on;
+xlabel('$k$','Interpreter','latex');
+ylabel('$\sigma_k/\sigma_1$','Interpreter','latex');
+legend('Interpreter','latex','Location','northoutside','Orientation','horizontal');
+exportgraphics(gcf, fullfile(figDir,'exact_svd.png'), 'Resolution', 500);
+%}
+%
+fprintf("ERA Error: %e vs Best SPLoewner Error %e\n",ERA_err,SPLoewner_err(bsidx))
