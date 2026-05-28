@@ -6,7 +6,7 @@ Companion MATLAB code for the YMMOR 2026 talk
 
 The talk introduces [**CIMTOOL**](https://github.com/dan123222123/CIMTOOL), a
 MATLAB package for solving linear / generalized / nonlinear eigenvalue problems
-by contour integration, with realization via Hankel / ERA, SPLoewner (shift-and-project),
+by contour integration, with realization via Hankel / ERA, SPLoewner (single-point Loewner),
 and MPLoewner (multi-point Loewner). The scripts here are the drivers that
 generate every figure in the deck and double as live demos during the talk.
 
