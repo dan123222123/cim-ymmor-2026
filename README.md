@@ -2,7 +2,7 @@
 
 Companion MATLAB code for the YMMOR 2026 talk
 **Contour Integral Methods for the Masses** by Dan Folescu
-(joint with [Mark Embree](https://www.embree.org) and Serkan Gugercin, Virginia Tech).
+(joint with Mark Embree and Serkan Gugercin, Virginia Tech).
 
 The talk introduces [**CIMTOOL**](https://github.com/dan123222123/CIMTOOL), a
 MATLAB package for solving linear / generalized / nonlinear eigenvalue problems
