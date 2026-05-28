@@ -5,14 +5,9 @@ Companion MATLAB code for the YMMOR 2026 talk
 (joint with Mark Embree and Serkan Gugercin, Virginia Tech).
 
 The talk introduces [**CIMTOOL**](https://github.com/dan123222123/CIMTOOL), a
-MATLAB package for solving linear / generalized / nonlinear eigenvalue problems
-by contour integration, with realization via Hankel / ERA, SPLoewner (single-point Loewner),
-and MPLoewner (multi-point Loewner).
+MATLAB package for solving nonlinear eigenvalue problems by contour integration via system realization using Hankel / ERA, SPLoewner (single-point Loewner), and MPLoewner (multi-point Loewner) methods.
 
 ## Assumptions
-
-The drivers make two assumptions, and do nothing to discover or work
-around either:
 
 1. **CIMTOOL is already on the MATLAB path.** The scripts call
    `Numerics.ModalTruncation`, `Numerics.sploewner.*`, `Numerics.realize`,
@@ -62,8 +57,6 @@ matlab -batch "addpath(genpath('/path/to/CIMTOOL/src')); \
 | CIMTOOL | latest `main` | `git clone https://github.com/dan123222123/CIMTOOL` |
 | Parallel Computing Toolbox | optional | only `exact_sploewner_sigma_choice.m` and `qep.m` use `parfor`; serial `for` works too |
 
-No proprietary data is required: `data/boeing767_nnLTI.mat` ships with the repo.
-
 ## Layout
 
 ```
@@ -93,7 +86,4 @@ preserved in `redblue_license.txt`.
 
 ## Acknowledgements
 
-This work is supported by **NSF DMS-2411141**. Joint with Mark Embree and
-Serkan Gugercin (Virginia Tech). The CIMTOOL package and these drivers
-build on prior contour-integral work by Beyn, Brennan, Embree, and others;
-see references in the talk slides for details.
+This work is supported by **NSF DMS-2411141**.
