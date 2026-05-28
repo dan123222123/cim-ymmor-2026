@@ -25,7 +25,6 @@ generate every figure in the deck and double as live demos during the talk.
 modal_truncation              % synthetic 2-RHP-pole / 4-LHP-pole split
 modal_truncation_boeing767    % Boeing 767 SISO, real stable-unstable split
 qep                           % Tisseur & Meerbergen QEP, CIMTOOL launcher
-exact_sploewner_sigma_choice  % \sigma-choice heatmap (slide 5)
 exact_data                    % exact-Markov-parameter \sigma sweep
 quadrature_data               % same sweep with quadrature samples
 ```
@@ -57,7 +56,6 @@ code/
 ├── qep.m                                # NEP example: gyroscopic QEP (Tisseur & Meerbergen 2001 §3.6)
 ├── exact_data.m                         # Where should sigma live? -- exact Markov parameters
 ├── quadrature_data.m                    # Same sweep with quadrature-sampled moments
-├── exact_sploewner_sigma_choice.m       # sigma-choice heatmap (slide 5)
 ├── gmatch.m                             # greedy 1-1 matching of computed -> reference eigenvalues
 ├── realize_inorder.m                    # eig(Ds, Db) sorted by descending |lambda|
 ├── redblue.m                            # diverging colormap (BSD, Auton 2009)
@@ -89,39 +87,6 @@ matlab -nodisplay -batch 'run_mode = "figs"; modal_truncation_boeing767;'
 
 Output PDFs (e.g. `mt_synth_poles.pdf`, `mt_boeing_bode.pdf`) land in
 `../tex/figures/`.
-
-## How the scripts use CIMTOOL
-
-The headline class is **`Numerics.ModalTruncation`** (CIMTOOL `+Numerics/`),
-which packages the realization pipeline behind a single callable:
-
-```matlab
-contour = Numerics.Contour.CircularSegment(0, rho, [-pi/2, pi/2], [Narc; Nchord]);
-rd = Numerics.RealizationData();
-rd.RealizationSize   = Numerics.RealizationSize(r, T, T);   % r poles expected in D
-rd.ComputationalMode = Numerics.ComputationalMode.Hankel;   % or .SPLoewner / .MPLoewner
-
-mt = Numerics.ModalTruncation(H, contour, rd);
-mt.compute();
-
-H_in  = mt.getRegionTransferFunction();    % approximates H_D
-H_out = mt.getResidualTransferFunction();  % H - H_in
-ew    = mt.getRegionEigenvalues();         % eigenvalues recovered inside D
-```
-
-The `qep.m` driver goes one level lower and uses the GUI launcher
-`Visual.CIM(operator, contour)` so the speaker can scrub interpolation
-shifts and quadrature node counts during the talk.
-
-## Citation
-
-If you use this code, please cite CIMTOOL itself plus the talk's funding
-acknowledgement:
-
-> D. Folescu, M. Embree, S. Gugercin. *Contour Integral Methods for the Masses.*
-> YMMOR 2026. Supported by NSF DMS-2411141.
-
-CIMTOOL's `CITATION.cff` (in the main repo) carries the canonical authorship.
 
 ## License
 
